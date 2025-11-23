@@ -110,7 +110,7 @@ python mimic3_diag_omtology_for_medrq.py \
 ```
 
 ### Training 
-#### MedRQ-VAE
+#### Stage 1: Ontology-driven RQ-VAE
 1. training
 ```bash
 cd ../MedRQ_VAE
@@ -123,7 +123,7 @@ cd ../dataset/scripts
 python export_medrq_sid.py \
 ```
 
-#### downstream CMR
+#### Stage 2: Downstream Task-Medication Recommendation
 ```bash
 cd ../downstream_GRU4CMR
 python main.py \
