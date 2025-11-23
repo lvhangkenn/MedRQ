@@ -1,5 +1,5 @@
 # MedRQ
-This is the official implementation of **Towards Efficient and Interpretable Medical Concept Representation via Ontology-driven Residual Vector Quantization** (WWW 2026 short, under review).
+This is the official implementation of **Towards Efficient and Interpretable Medical Concept Representation via Ontology-driven Residual Vector Quantization**.
 
 
 ## Data
