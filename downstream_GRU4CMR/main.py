@@ -11,10 +11,25 @@ def run_single_model(config):
         print(config)
 
     gpu_only = bool(config.get('GPU_ONLY', False))
-    use_cuda = bool(config.get('USE_CUDA', False)) or gpu_only
-    device = torch.device('cuda:0' if use_cuda else 'cpu')
-    if not perf_test:
-        print(f"Using device: {device}")
+    want_cuda = bool(config.get('USE_CUDA', False)) or gpu_only
+    if want_cuda:
+        if not torch.cuda.is_available():
+            raise RuntimeError("Requested GPU execution, but no CUDA GPUs are available.")
+
+        gpu_index = str(config.get('GPU', '0'))
+        os.environ['CUDA_VISIBLE_DEVICES'] = gpu_index
+        device = torch.device('cuda:0')
+        if not perf_test:
+            print(device)
+            print(torch.tensor(0).to(device))
+            print(os.environ['CUDA_VISIBLE_DEVICES'])
+        torch.cuda.set_device(device)
+        if not perf_test:
+            print(device)
+    else:
+        device = torch.device('cpu')
+        if not perf_test:
+            print(device)
 
     root = "mimic-iii_data/"
     data_path = config['ROOT'] + root + "records_final.pkl"
@@ -44,8 +59,8 @@ def run_single_model(config):
         config,
         device,
         (ddi_adj, data, voc),
-        hidvae_embeddings=hidvae_embeddings,
-        hidvae_sids=hidvae_sids,
+        medrq_embeddings=hidvae_embeddings,
+        medrq_sids=hidvae_sids,
         sid_aggregation=sid_aggregation,
     )
 

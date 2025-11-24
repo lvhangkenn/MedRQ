@@ -3,13 +3,8 @@ import os
 import random
 import torch
 import torch.nn.functional as F
-
-from data.tags_amazon import AmazonReviews
 from data.medical_icd import MedicalICD
-from data.ml1m import RawMovieLens1M
-from data.ml32m import RawMovieLens32M
-from data.tags_kuairand import KuaiRand
-from data.schemas import SeqBatch, TaggedSeqBatch  # 正确导入TaggedSeqBatch
+from data.schemas import SeqBatch, TaggedSeqBatch 
 from enum import Enum
 from torch import Tensor
 from torch.utils.data import Dataset
@@ -20,34 +15,25 @@ PROCESSED_MOVIE_LENS_SUFFIX = "/processed/data.pt"
 
 @gin.constants_from_enum
 class RecDataset(Enum):
-    AMAZON = 1
-    ML_1M = 2
-    ML_32M = 3
-    KUAIRAND = 4
+
     MEDICAL = 5
     MEDICAL_MIMIC4 = 6
     MEDICAL_MIMIC3 = 7
 
 
 DATASET_NAME_TO_RAW_DATASET = {
-    RecDataset.AMAZON: AmazonReviews,
-    RecDataset.ML_1M: RawMovieLens1M,
-    RecDataset.ML_32M: RawMovieLens32M,
-    RecDataset.KUAIRAND: KuaiRand,
+    # 这里只映射当前真正存在的数据集实现
     RecDataset.MEDICAL: MedicalICD,
     RecDataset.MEDICAL_MIMIC4: MedicalICD,
-    RecDataset.MEDICAL_MIMIC3: MedicalICD
+    RecDataset.MEDICAL_MIMIC3: MedicalICD,
 }
 
 
 DATASET_NAME_TO_MAX_SEQ_LEN = {
-    RecDataset.AMAZON: 20,
-    RecDataset.ML_1M: 200,
-    RecDataset.ML_32M: 200,
-    RecDataset.KUAIRAND: 20,
+    # 医疗数据集是一次性 ICD 诊断标签，因此序列长度为 1
     RecDataset.MEDICAL: 1,
     RecDataset.MEDICAL_MIMIC4: 1,
-    RecDataset.MEDICAL_MIMIC3: 1
+    RecDataset.MEDICAL_MIMIC3: 1,
 }
 
 
@@ -57,7 +43,8 @@ class ItemData(Dataset):
         root: str,
         *args,
         force_process: bool = False,
-        dataset: RecDataset = RecDataset.ML_1M,
+        # 默认使用当前项目实际存在的医疗数据集（MIMIC-III）
+        dataset: RecDataset = RecDataset.MEDICAL_MIMIC3,
         train_test_split: str = "all",
         **kwargs
     ) -> None:
@@ -177,7 +164,8 @@ class SeqData(Dataset):
         is_train: bool = True,
         subsample: bool = False,
         force_process: bool = False,
-        dataset: RecDataset = RecDataset.ML_1M,
+        # 默认使用当前项目实际存在的医疗数据集（MIMIC-III）
+        dataset: RecDataset = RecDataset.MEDICAL_MIMIC3,
         **kwargs
     ) -> None:
         
@@ -256,20 +244,15 @@ class SeqData(Dataset):
             "x_fut": x_fut,
             "seq_mask": (item_ids >= 0)
         }
-        
-        # 如果有标签数据，则使用TaggedSeqBatch
+
         if self.has_tags:
-            # 获取序列中每个商品的标签嵌入和索引
             tags_emb = self.tags_emb[item_ids]
             tags_indices = self.tags_indices[item_ids]
-            # 对于无效的商品ID，将标签数据设为-1
             tags_emb[item_ids == -1] = -1
             tags_indices[item_ids == -1] = -1
             
-            # 获取未来商品的标签嵌入和索引
             tags_emb_fut = self.tags_emb[item_ids_fut]
             tags_indices_fut = self.tags_indices[item_ids_fut]
-            # 对于无效的未来商品ID，将标签数据设为-1
             tags_emb_fut[item_ids_fut == -1] = -1
             tags_indices_fut[item_ids_fut == -1] = -1
             
@@ -284,15 +267,17 @@ class SeqData(Dataset):
                 tags_indices=tags_indices
             )
         else:
-            # 如果没有标签数据，则使用普通的SeqBatch
             return SeqBatch(**batch_data)
 
 
 if __name__ == "__main__":
-    dataset = ItemData("dataset/amazon", dataset=RecDataset.AMAZON, split="beauty", force_process=True)
+    dataset = ItemData(
+        root="dataset/mimic3",  
+        dataset=RecDataset.MEDICAL_MIMIC3,
+        force_process=False,
+    )
     sample = dataset[0]
     print(f"样本数据形状: {sample.x.shape}")
     if hasattr(sample, 'tags_emb') and sample.tags_emb is not None:
         print(f"标签嵌入形状: {sample.tags_emb.shape}")
         print(f"标签索引形状: {sample.tags_indices.shape}")
-    import pdb; pdb.set_trace()
