@@ -17,9 +17,10 @@ dataset
 |  |_ ndc2atc_level4.csv
 |  |_ ndc2RXCUI.txt
 |  |_ precudure_icd9_ontology.csv
-|  |_ procedure_icd9_ontology.csv
+|  |_ drug_atc_ontology.csv
 |  |_ diagnosis_icd9_ontology.csv
 |  |_ D_ICD_PROCEDURES.csv
+|  |_ D_ICD_DIAGNOSES.csv
 ```
 
 After processing by using the scripts provided in this repository,  the structure of the data set should be like(take mimic-iii as an example)
